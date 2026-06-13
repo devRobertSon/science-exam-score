@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>과학 약점진단 리포트 열람</title>
+<style>
+  body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#eef1f5;margin:0;
+       display:flex;min-height:100vh;align-items:center;justify-content:center;color:#1d2330}
+  .card{background:#fff;max-width:420px;width:90%;padding:34px 30px;border-radius:14px;
+        box-shadow:0 6px 24px rgba(0,0,0,.10);text-align:center}
+  h1{font-size:20px;margin:0 0 6px}
+  p.sub{color:#667;font-size:13.5px;margin:0 0 22px;line-height:1.6}
+  input{width:100%;box-sizing:border-box;padding:13px 14px;font-size:17px;letter-spacing:1px;
+        border:1.5px solid #c7cfdb;border-radius:9px;text-align:center}
+  input:focus{outline:none;border-color:#2d77c2}
+  button{margin-top:14px;width:100%;padding:13px;font-size:16px;font-weight:700;color:#fff;
+         background:#1a3a5c;border:0;border-radius:9px;cursor:pointer}
+  button:hover{background:#244e79}
+  .msg{margin-top:14px;font-size:13.5px;min-height:20px}
+  .err{color:#c0392b}.ok{color:#1d8a4e}
+  .note{margin-top:20px;font-size:12px;color:#8a93a3;line-height:1.6}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>과학 약점진단 리포트</h1>
+    <p class="sub">개인 코드를 입력하면 본인 리포트가 열립니다.<br>리포트(PDF)를 열 때 같은 코드를 한 번 더 입력하세요.</p>
+    <input id="code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="개인 코드 입력" />
+    <button id="go">리포트 열기</button>
+    <div class="msg" id="msg"></div>
+    <div class="note">코드는 담당 선생님에게 개별 전달받습니다. 타인과 공유하지 마세요.</div>
+  </div>
+<script>
+  const SALT = "6b3e597ed237e87a";
+  async function tokenOf(code){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT+code));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32);
+  }
+  async function open_(){
+    const code = document.getElementById('code').value.trim();
+    const msg = document.getElementById('msg');
+    if(!code){ msg.className='msg err'; msg.textContent='코드를 입력하세요.'; return; }
+    msg.className='msg'; msg.textContent='확인 중...';
+    try{
+      const url = 'reports/' + (await tokenOf(code)) + '.pdf';
+      const r = await fetch(url, {method:'HEAD'});
+      if(r.ok){ msg.className='msg ok'; msg.textContent='리포트를 엽니다...'; window.location.href = url; }
+      else { msg.className='msg err'; msg.textContent='코드가 올바르지 않습니다.'; }
+    }catch(e){ msg.className='msg err'; msg.textContent='오류가 발생했습니다. 다시 시도하세요.'; }
+  }
+  document.getElementById('go').addEventListener('click', open_);
+  document.getElementById('code').addEventListener('keydown', e=>{ if(e.key==='Enter') open_(); });
+</script>
+</body>
+</html>
