@@ -26,11 +26,11 @@
 <body>
   <div class="card">
     <h1>과학 약점진단 리포트</h1>
-    <p class="sub">게이트 코드를 입력하면 본인 리포트가 열립니다.<br>PDF가 열릴 때는 PDF 코드(게이트 코드와 다름)를 입력하세요.</p>
-    <input id="code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="게이트 코드 입력" />
+    <p class="sub">암호를 입력하면 본인 리포트가 열립니다.<br>리포트(PDF)를 열 때 같은 암호를 한 번 더 입력하세요.</p>
+    <input id="code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="암호 입력" />
     <button id="go">리포트 열기</button>
     <div class="msg" id="msg"></div>
-    <div class="note">코드 2개(게이트·PDF)는 담당 선생님에게 개별 전달받습니다. 타인과 공유하지 마세요.</div>
+    <div class="note">암호는 담당 선생님에게 개별 전달받습니다. 타인과 공유하지 마세요.</div>
   </div>
 <script>
   const SALT = "ec1a07860ada7af4";
@@ -41,13 +41,13 @@
   async function open_(){
     const code = document.getElementById('code').value.trim();
     const msg = document.getElementById('msg');
-    if(!code){ msg.className='msg err'; msg.textContent='게이트 코드를 입력하세요.'; return; }
+    if(!code){ msg.className='msg err'; msg.textContent='암호를 입력하세요.'; return; }
     msg.className='msg'; msg.textContent='확인 중...';
     try{
       const url = 'reports/' + (await tokenOf(code)) + '.pdf';
       const r = await fetch(url, {method:'HEAD'});
-      if(r.ok){ msg.className='msg ok'; msg.textContent='리포트를 엽니다... (PDF 코드 입력 필요)'; window.location.href = url; }
-      else { msg.className='msg err'; msg.textContent='게이트 코드가 올바르지 않습니다.'; }
+      if(r.ok){ msg.className='msg ok'; msg.textContent='리포트를 엽니다... (암호 한 번 더 입력)'; window.location.href = url; }
+      else { msg.className='msg err'; msg.textContent='암호가 올바르지 않습니다.'; }
     }catch(e){ msg.className='msg err'; msg.textContent='오류가 발생했습니다. 다시 시도하세요.'; }
   }
   document.getElementById('go').addEventListener('click', open_);
