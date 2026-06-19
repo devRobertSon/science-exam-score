@@ -18,6 +18,8 @@
   button{margin-top:14px;width:100%;padding:13px;font-size:16px;font-weight:700;color:#fff;
          background:#1a3a5c;border:0;border-radius:9px;cursor:pointer}
   button:hover{background:#244e79}
+  #links button{background:#2d6a4f;margin-top:10px}
+  #links button:hover{background:#35805f}
   .msg{margin-top:14px;font-size:13.5px;min-height:20px}
   .err{color:#c0392b}.ok{color:#1d8a4e}
   .note{margin-top:20px;font-size:12px;color:#8a93a3;line-height:1.6}
@@ -26,32 +28,46 @@
 <body>
   <div class="card">
     <h1>과학 약점진단 리포트</h1>
-    <p class="sub">암호를 입력하면 본인 리포트가 열립니다.<br>리포트(PDF)를 열 때 같은 암호를 한 번 더 입력하세요.</p>
+    <p class="sub">암호를 입력하면 본인 리포트(연합·경기)가 나타납니다.<br>리포트(PDF)를 열 때 같은 암호를 한 번 더 입력하세요.</p>
     <input id="code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="암호 입력" />
-    <button id="go">리포트 열기</button>
+    <button id="go">확인</button>
+    <div id="links"></div>
     <div class="msg" id="msg"></div>
     <div class="note">암호는 담당 선생님에게 개별 전달받습니다. 타인과 공유하지 마세요.</div>
   </div>
 <script>
   const SALT = "ec1a07860ada7af4";
-  async function tokenOf(code){
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT+code));
+  const SERIES = ["연합","경기"];
+  async function tokenOf(code, series){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(SALT+code+series));
     return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32);
   }
-  async function open_(){
+  async function check_(){
     const code = document.getElementById('code').value.trim();
     const msg = document.getElementById('msg');
+    const box = document.getElementById('links');
+    box.innerHTML = '';
     if(!code){ msg.className='msg err'; msg.textContent='암호를 입력하세요.'; return; }
     msg.className='msg'; msg.textContent='확인 중...';
-    try{
-      const url = 'reports/' + (await tokenOf(code)) + '.pdf';
-      const r = await fetch(url, {method:'HEAD'});
-      if(r.ok){ msg.className='msg ok'; msg.textContent='리포트를 엽니다... (암호 한 번 더 입력)'; window.location.href = url; }
-      else { msg.className='msg err'; msg.textContent='암호가 올바르지 않습니다.'; }
-    }catch(e){ msg.className='msg err'; msg.textContent='오류가 발생했습니다. 다시 시도하세요.'; }
+    let found = 0;
+    for(const s of SERIES){
+      const url = 'reports/' + (await tokenOf(code, s)) + '.pdf';
+      try{
+        const r = await fetch(url, {method:'HEAD'});
+        if(r.ok){
+          found++;
+          const b = document.createElement('button');
+          b.textContent = s + ' 리포트 열기';
+          b.addEventListener('click', ()=>{ window.location.href = url; });
+          box.appendChild(b);
+        }
+      }catch(e){}
+    }
+    if(found){ msg.className='msg ok'; msg.textContent='열 리포트를 선택하세요. (PDF 열 때 같은 암호 한 번 더 입력)'; }
+    else{ msg.className='msg err'; msg.textContent='암호가 올바르지 않습니다.'; }
   }
-  document.getElementById('go').addEventListener('click', open_);
-  document.getElementById('code').addEventListener('keydown', e=>{ if(e.key==='Enter') open_(); });
+  document.getElementById('go').addEventListener('click', check_);
+  document.getElementById('code').addEventListener('keydown', e=>{ if(e.key==='Enter') check_(); });
 </script>
 </body>
 </html>
